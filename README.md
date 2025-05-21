@@ -13,7 +13,7 @@ Highlights the path segments which angle is not precise to Italic Angle of the s
 
 # Angles
 
-The angle is taken from Font Info -> Masters. The plugin always check the vertical lines only. If you work with italic master, it will be whatever 8-12 the master use for Italic Angle. If you work with upright master, the plugin will check all the vertical stems (0 degree).
+The angle is taken from Font Info -> Masters. That is, the plugin check only the vertical segments. If you work with italic master, it will be whatever 8-12 the master use for Italic Angle. If you work with upright master, the plugin will check all the vertical stems and handles at 0 degree.
 
 # Background
 
