@@ -19,9 +19,12 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 		
 		# precise italic angle
 		anglePrecise = Glyphs.font.selectedFontMaster.italicAngle
+		# almost precise angle (+ and -) around precise angle
+		angleAlmostPrecise = 0.5
 		# observed angle (+ and -) around precise angle
 		angleObserved = 10
-		color = '#FF2850'
+		colorRed = '#FF2850'
+		colorYellow = '#FF6428'
 		opacity = 0.8
 		lineThickness = 2
 		dotDiameter = 6
@@ -51,6 +54,11 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 						if angle <= -90: angle += 180
 						# angle is within the observed range but not precise
 						if (angle != anglePrecise) and (angle >= anglePrecise - angleObserved) and (angle <= anglePrecise + angleObserved):
+							
+							# change color from red to yellow if the angle is within almost precise range
+							color = colorRed
+							if (angle >= anglePrecise - angleAlmostPrecise) and (angle <= anglePrecise + angleAlmostPrecise):
+								color = colorYellow
 							
 							# find the horizontal difference between current node position and correct (for italic angle) node position
 							angleSegment = 90 - anglePrecise
