@@ -45,14 +45,6 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 					betweenHandles = nodeOne.type == OFFCURVE and nodeTwo.type == OFFCURVE
 					betweenOpenPath = not path.closed and i == 0
 					if not betweenHandles and not betweenOpenPath:
-						
-						# if one node is handle and the other is smooth node, then get an angle of the closest straight line from a smooth node
-						# in this case only the dot around handle will be drawn an it will be located along the straight line
-						# if nodeOne.smooth and (nodeOne.type != OFFCURVE) and (nodeTwo.type == OFFCURVE) and (nodes[i-2].type != OFFCURVE):
-						# 	nodeOne = nodes[i-2]
-						# elif nodeTwo.smooth and (nodeTwo.type != OFFCURVE) and (nodeOne.type == OFFCURVE) and (nodes[i+1].type != OFFCURVE):
-						# 	nodeTwo = nodes[i+1]
-						
 						posOne = nodeOne.position
 						posTwo = nodeTwo.position
 						
@@ -69,18 +61,20 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 								color = colorYellow
 							
 							# find the horizontal difference between current node position and correct (for italic angle) node position
-							angleSegment = 90 - anglePrecise
 							dotLower = posOne
 							dotUpper = posTwo
 							if posOne.y > posTwo.y:
 								dotLower = posTwo
 								dotUpper = posOne
+							angleSegment = 90 - anglePrecise
 							xDifference = (dotLower.x + (dotUpper.y - dotLower.y) / tan(angleSegment * pi / 180)) - dotUpper.x
 							# if one point movement will make the angle closer to precise italic angle
 							if (abs(xDifference) >= 1) or (abs(abs(xDifference) - 1) < abs(xDifference)):
 								xDifference = round(xDifference)
 								
-								# draw line segment between nodes
+								
+								
+								# draw line between nodes
 								NSColor.colorWithString_(color).colorWithAlphaComponent_(opacity).set()
 								line = NSBezierPath.alloc().init()
 								line.moveToPoint_(posOne)
@@ -88,7 +82,22 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 								line.setLineWidth_(lineThickness / scale)
 								line.stroke()
 								
-								# draw direction dots
+								
+								
+								
+								# drawing dots requires to recalculate the x difference for better dots placement for some cases
+								# if one node is handle and the other is smooth node, then use a next node on line segment instead of smooth node
+								# in this case only the dot around handle will be drawn an it will be located along the straight line
+								if nodeOne.smooth and (nodeOne.type != OFFCURVE) and (nodeTwo.type == OFFCURVE) and (nodes[i-2].type != OFFCURVE):
+									posOne = nodes[i-2].position
+								elif nodeTwo.smooth and (nodeTwo.type != OFFCURVE) and (nodeOne.type == OFFCURVE) and (nodes[i+1].type != OFFCURVE):
+									posTwo = nodes[i+1].position
+								dotLower = posOne
+								dotUpper = posTwo
+								if posOne.y > posTwo.y:
+									dotLower = posTwo
+									dotUpper = posOne
+								xDifference = (dotLower.x + (dotUpper.y - dotLower.y) / tan(angleSegment * pi / 180)) - dotUpper.x
 								# move dot position away from node if it is visible to close to the node when scaling down
 								if (xDifference * scale) < 3:
 									if xDifference > 0:
@@ -109,11 +118,15 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 									if nodeTwo.type == OFFCURVE:
 										nodeUpperIsOnCurve = False
 								diameter = dotDiameter / scale
-								# draw lower dot
+								
+								
+								
+								# draw directional dots
+								# lower dot
 								if (nodeLowerIsOnCurve and nodeUpperIsOnCurve) or (not nodeLowerIsOnCurve and nodeUpperIsOnCurve):
 									rectLower = NSMakeRect(dotLower.x - xDifference - (diameter / 2), dotLower.y - (diameter / 2), diameter, diameter)
 									NSBezierPath.bezierPathWithOvalInRect_(rectLower).fill()
-								# draw upper dot
+								# upper dot
 								if (nodeLowerIsOnCurve and nodeUpperIsOnCurve) or (not nodeUpperIsOnCurve and nodeLowerIsOnCurve):
 									rectUpper = NSMakeRect(dotUpper.x + xDifference - (diameter / 2), dotUpper.y - (diameter / 2), diameter, diameter)
 									NSBezierPath.bezierPathWithOvalInRect_(rectUpper).fill()
