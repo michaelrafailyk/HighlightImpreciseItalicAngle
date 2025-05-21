@@ -1,4 +1,4 @@
-# HighlightImpreciseItalicAngle.glyphsReporter
+# Highlight Imprecise Italic Angle
 
 A plugin for the [Glyphs font editor](http://glyphsapp.com/).
 
