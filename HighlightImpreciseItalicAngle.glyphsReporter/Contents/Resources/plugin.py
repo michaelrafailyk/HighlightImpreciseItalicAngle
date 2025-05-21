@@ -48,10 +48,11 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 						
 						# if one node is handle and the other is smooth node, then get an angle of the closest straight line from a smooth node
 						# in this case only the dot around handle will be drawn an it will be located along the straight line
-						if nodeOne.smooth and (nodeOne.type != OFFCURVE) and (nodeTwo.type == OFFCURVE) and (nodes[i-2].type != OFFCURVE):
-							nodeOne = nodes[i-2]
-						elif nodeTwo.smooth and (nodeTwo.type != OFFCURVE) and (nodeOne.type == OFFCURVE) and (nodes[i+1].type != OFFCURVE):
-							nodeTwo = nodes[i+1]
+						# if nodeOne.smooth and (nodeOne.type != OFFCURVE) and (nodeTwo.type == OFFCURVE) and (nodes[i-2].type != OFFCURVE):
+						# 	nodeOne = nodes[i-2]
+						# elif nodeTwo.smooth and (nodeTwo.type != OFFCURVE) and (nodeOne.type == OFFCURVE) and (nodes[i+1].type != OFFCURVE):
+						# 	nodeTwo = nodes[i+1]
+						
 						posOne = nodeOne.position
 						posTwo = nodeTwo.position
 						
