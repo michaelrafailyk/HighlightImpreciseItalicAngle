@@ -46,7 +46,8 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 					betweenOpenPath = not path.closed and i == 0
 					if not betweenHandles and not betweenOpenPath:
 						
-						# if one of nodes is handle, then get an angle of the closest straight line which is opposite to handle
+						# if one node is handle and the other is smooth node, then get an angle of the closest straight line from a smooth node
+						# in this case only the dot around handle will be drawn an it will be located along the straight line
 						if nodeOne.smooth and (nodeOne.type != OFFCURVE) and (nodeTwo.type == OFFCURVE) and (nodes[i-2].type != OFFCURVE):
 							nodeOne = nodes[i-2]
 						elif nodeTwo.smooth and (nodeTwo.type != OFFCURVE) and (nodeOne.type == OFFCURVE) and (nodes[i+1].type != OFFCURVE):
