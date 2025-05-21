@@ -41,10 +41,16 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 				for i in range(nodesCount):
 					nodeOne = nodes[(i-1) % nodesCount]
 					nodeTwo = nodes[i]
+					# do not display highlight between the handles, as well as between the last and first node of an open path
 					betweenHandles = nodeOne.type == OFFCURVE and nodeTwo.type == OFFCURVE
 					betweenOpenPath = not path.closed and i == 0
-					# do not display highlight between the handles, as well as between the last and first node of an open path
 					if not betweenHandles and not betweenOpenPath:
+						
+						# if one of nodes is handle, then get an angle of the closest straight line which is opposite to handle
+						if nodeOne.smooth and (nodeOne.type != OFFCURVE) and (nodeTwo.type == OFFCURVE) and (nodes[i-2].type != OFFCURVE):
+							nodeOne = nodes[i-2]
+						elif nodeTwo.smooth and (nodeTwo.type != OFFCURVE) and (nodeOne.type == OFFCURVE) and (nodes[i+1].type != OFFCURVE):
+							nodeTwo = nodes[i+1]
 						posOne = nodeOne.position
 						posTwo = nodeTwo.position
 						
