@@ -6,7 +6,7 @@ Highlights the path segments which angle is not precise to master's Italic Angle
 
 ![](PreviewAnimation.gif)
 
-# Features
+# Colors
 
 - Red color means that the segment most likely needs correction.
 - Yellow color means that the segment angle is almost precise (±0.5 degree around Italic Angle) so you may decide to just leave it as is.
