@@ -23,11 +23,17 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 		angleAlmostPrecise = 0.5
 		# observed angle (+ and -) around precise angle
 		angleObserved = 10
-		colorRed = '#FF2850'
-		colorYellow = '#FF6428'
-		opacity = 0.8
 		lineThickness = 2
 		dotDiameter = 6
+		opacity = 0.8
+		# colors
+		colorRed = '#FF2850'
+		colorYellow = '#FF6428'
+		# dark mode colors
+		if self.controller.graphicView().drawDark():
+			colorRed = '#FF6478'
+			colorYellow = '#FFA050'
+		
 		
 		
 		scale = self.getScale()
