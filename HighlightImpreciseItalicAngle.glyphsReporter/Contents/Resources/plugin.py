@@ -70,7 +70,6 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 							xDifference = (dotLower.x + (dotUpper.y - dotLower.y) / tan(angleSegment * pi / 180)) - dotUpper.x
 							# if one point movement will make the angle closer to precise italic angle
 							if (abs(xDifference) >= 1) or (abs(abs(xDifference) - 1) < abs(xDifference)):
-								xDifference = round(xDifference)
 								
 								
 								
@@ -97,13 +96,14 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 								if posOne.y > posTwo.y:
 									dotLower = posTwo
 									dotUpper = posOne
-								xDifference = (dotLower.x + (dotUpper.y - dotLower.y) / tan(angleSegment * pi / 180)) - dotUpper.x
-								# move dot position a little away from node if it is visible to close to the node when scaling down
-								if (xDifference * scale) < 3:
-									if xDifference > 0:
-										xDifference += 3 / scale
+								xDifference = round((dotLower.x + (dotUpper.y - dotLower.y) / tan(angleSegment * pi / 180)) - dotUpper.x)
+								xDifferenceShifted = xDifference
+								# shift dot position a little away from a node if it is visible to close to the node when scaling down
+								if (xDifferenceShifted * scale) < 3:
+									if xDifferenceShifted > 0:
+										xDifferenceShifted += 3 / scale
 									else:
-										xDifference -= 3 / scale
+										xDifferenceShifted -= 3 / scale
 								# don't draw dots if current node is on curve but opposite node is handle (draw dot only for handle in this case)
 								nodeLowerIsOnCurve = True
 								nodeUpperIsOnCurve = True
@@ -118,18 +118,31 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 									if nodeTwo.type == OFFCURVE:
 										nodeUpperIsOnCurve = False
 								diameter = dotDiameter / scale
+								textColor = NSColor.colorWithString_(color)
+								textOffsetX = 5 / scale
+								textOffsetY = 5 / scale
+								textAlignRight = 'bottomright'
+								textAlignLeft = 'bottomleft'
+								if xDifference < 0:
+									textOffsetX = -textOffsetX
+									textAlignRight = 'bottomleft'
+									textAlignLeft = 'bottomright'
 								
 								
 								
-								# draw directional dots
-								# lower dot
+								# draw directional dots and distance numbers
 								if (nodeLowerIsOnCurve and nodeUpperIsOnCurve) or (not nodeLowerIsOnCurve and nodeUpperIsOnCurve):
-									rectLower = NSMakeRect(dotLower.x - xDifference - (diameter / 2), dotLower.y - (diameter / 2), diameter, diameter)
+									# lower dot
+									rectLower = NSMakeRect(dotLower.x - xDifferenceShifted - (diameter / 2), dotLower.y - (diameter / 2), diameter, diameter)
 									NSBezierPath.bezierPathWithOvalInRect_(rectLower).fill()
-								# upper dot
+									# lower number
+									self.drawTextAtPoint(str(abs(xDifference)), (dotLower.x - xDifferenceShifted - textOffsetX, dotLower.y - textOffsetY), fontColor = textColor, align = textAlignRight)
 								if (nodeLowerIsOnCurve and nodeUpperIsOnCurve) or (not nodeUpperIsOnCurve and nodeLowerIsOnCurve):
-									rectUpper = NSMakeRect(dotUpper.x + xDifference - (diameter / 2), dotUpper.y - (diameter / 2), diameter, diameter)
+									# upper dot
+									rectUpper = NSMakeRect(dotUpper.x + xDifferenceShifted - (diameter / 2), dotUpper.y - (diameter / 2), diameter, diameter)
 									NSBezierPath.bezierPathWithOvalInRect_(rectUpper).fill()
+									# upper number
+									self.drawTextAtPoint(str(abs(xDifference)), (dotUpper.x + xDifferenceShifted + textOffsetX, dotUpper.y - textOffsetY), fontColor = textColor, align = textAlignLeft)
 	
 	@objc.python_method
 	def __file__(self):
