@@ -136,13 +136,15 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 									rectLower = NSMakeRect(dotLower.x - xDifferenceShifted - (diameter / 2), dotLower.y - (diameter / 2), diameter, diameter)
 									NSBezierPath.bezierPathWithOvalInRect_(rectLower).fill()
 									# lower number
-									self.drawTextAtPoint(str(abs(xDifference)), (dotLower.x - xDifferenceShifted - textOffsetX, dotLower.y - textOffsetY), fontColor = textColor, align = textAlignRight)
+									if xDifference != 0:
+										self.drawTextAtPoint(str(abs(xDifference)), (dotLower.x - xDifferenceShifted - textOffsetX, dotLower.y - textOffsetY), fontColor = textColor, align = textAlignRight)
 								if (nodeLowerIsOnCurve and nodeUpperIsOnCurve) or (not nodeUpperIsOnCurve and nodeLowerIsOnCurve):
 									# upper dot
 									rectUpper = NSMakeRect(dotUpper.x + xDifferenceShifted - (diameter / 2), dotUpper.y - (diameter / 2), diameter, diameter)
 									NSBezierPath.bezierPathWithOvalInRect_(rectUpper).fill()
 									# upper number
-									self.drawTextAtPoint(str(abs(xDifference)), (dotUpper.x + xDifferenceShifted + textOffsetX, dotUpper.y - textOffsetY), fontColor = textColor, align = textAlignLeft)
+									if xDifference != 0:
+										self.drawTextAtPoint(str(abs(xDifference)), (dotUpper.x + xDifferenceShifted + textOffsetX, dotUpper.y - textOffsetY), fontColor = textColor, align = textAlignLeft)
 	
 	@objc.python_method
 	def __file__(self):
