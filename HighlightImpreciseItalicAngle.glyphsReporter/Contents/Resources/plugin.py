@@ -105,11 +105,12 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 								xDifference = round((dotLower.x + (dotUpper.y - dotLower.y) / tan(angleSegment * pi / 180)) - dotUpper.x)
 								xDifferenceShifted = xDifference
 								# shift dot position a little away from a node if it is visible to close to the node when scaling down
-								if (xDifferenceShifted * scale) < 3:
+								xShiftCorrection = 4
+								if (xDifferenceShifted * scale) < xShiftCorrection:
 									if xDifferenceShifted > 0:
-										xDifferenceShifted += 3 / scale
+										xDifferenceShifted += xShiftCorrection / scale
 									else:
-										xDifferenceShifted -= 3 / scale
+										xDifferenceShifted -= xShiftCorrection / scale
 								# don't draw dots if current node is on curve but opposite node is handle (draw dot only for handle in this case)
 								nodeLowerIsOnCurve = True
 								nodeUpperIsOnCurve = True
