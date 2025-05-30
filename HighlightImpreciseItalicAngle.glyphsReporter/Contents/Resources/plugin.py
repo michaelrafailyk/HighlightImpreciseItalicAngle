@@ -19,8 +19,6 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 		
 		# precise italic angle
 		anglePrecise = Glyphs.font.selectedFontMaster.italicAngle
-		# almost precise angle (+ and -) around precise angle
-		angleAlmostPrecise = 0.5
 		# observed angle (+ and -) around precise angle
 		angleObserved = 10
 		lineThickness = 2
@@ -56,16 +54,11 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 						
 						# calculate angle between nodes
 						angle = degrees(atan2(posTwo.y - posOne.y, posTwo.x - posOne.x))
-						angle = round((-angle - 90), 1)
+						angle = -angle - 90
 						if angle <= -90: angle += 180
+						angle = round(angle, 1)
 						# angle is within the observed range but not precise
 						if (angle != anglePrecise) and (angle >= anglePrecise - angleObserved) and (angle <= anglePrecise + angleObserved):
-							
-							# change color from red to yellow if the angle is within almost precise range
-							color = colorRed
-							if (angle >= anglePrecise - angleAlmostPrecise) and (angle <= anglePrecise + angleAlmostPrecise):
-								color = colorYellow
-							
 							# find the horizontal difference between current node position and correct (for italic angle) node position
 							dotLower = posOne
 							dotUpper = posTwo
@@ -75,8 +68,34 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 							angleSegment = 90 - anglePrecise
 							xDifference = (dotLower.x + (dotUpper.y - dotLower.y) / tan(angleSegment * pi / 180)) - dotUpper.x
 							# if one point movement will make the angle closer to precise italic angle
-							if (abs(xDifference) >= 1) or (abs(abs(xDifference) - 1) < abs(xDifference)):
+							if (abs(xDifference) >= 1) or (abs(abs(round(xDifference, 1)) - 1) <= abs(round(xDifference, 1))):
+								# correct xDifferenceRounded if it is zero (after rounding) but the angle could be improved
+								xDifferenceRounded = round(xDifference)
+								if xDifferenceRounded == 0:
+									if xDifference > 0:
+										xDifferenceRounded = 1
+									elif xDifference < 0:
+										xDifferenceRounded = -1
 								
+								
+								
+								# find the angle difference before and after correction
+								angleNew = degrees(atan2(dotUpper.y - dotLower.y, (xDifferenceRounded + dotUpper.x) - dotLower.x))
+								angleNew = -angleNew - 90
+								if angleNew <= -90: angleNew += 180
+								angleNew = round(angleNew, 1)
+								angleDifferenceOld = round(abs(angle - anglePrecise), 1)
+								angleDifferenceNew = round(abs(angleNew - anglePrecise), 1)
+								
+								
+								
+								# colors
+								# set color to red
+								color = colorRed
+								# change color to yellow if the angle difference before and after correction (comparing to precise angle) is remain the same
+								# example – precise angle is 12, old angle is 11.7, new angle is 12.3, so the difference is still the same
+								if (angleDifferenceOld == angleDifferenceNew):
+									color = colorYellow
 								
 								
 								# draw line between nodes
@@ -90,8 +109,8 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 								
 								
 								
-								# drawing dots requires to recalculate the x difference for better dots placement for some cases
-								# if one node is handle and the other is smooth node, then use a next node on line segment instead of smooth node
+								# drawing dots requires to recalculate the x difference for better dots placement in some cases
+								# if one node is handle and the other is smooth node, then use a next node on line segment instead of smooth node to calculate the x difference
 								# in this case only the dot around handle will be drawn an it will be located along the straight line
 								if nodeOne.smooth and (nodeOne.type != OFFCURVE) and (nodeTwo.type == OFFCURVE) and (nodes[i-2].type != OFFCURVE):
 									posOne = nodes[i-2].position
@@ -102,7 +121,18 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 								if posOne.y > posTwo.y:
 									dotLower = posTwo
 									dotUpper = posOne
-								xDifference = round((dotLower.x + (dotUpper.y - dotLower.y) / tan(angleSegment * pi / 180)) - dotUpper.x)
+								xDifference = (dotLower.x + (dotUpper.y - dotLower.y) / tan(angleSegment * pi / 180)) - dotUpper.x
+								# correct xDifferenceRounded if it is zero (after rounding) but the angle could be improved
+								xDifferenceRounded = round(xDifference)
+								if xDifferenceRounded == 0:
+									if xDifference > 0:
+										xDifferenceRounded = 1
+									elif xDifference < 0:
+										xDifferenceRounded = -1
+								
+								
+								
+								# preparations for drawing placeholder dots and distance numbers
 								xDifferenceShifted = xDifference
 								# shift dot position a little away from a node if it is visible to close to the node when scaling down
 								xShiftCorrection = 4
@@ -136,22 +166,19 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 									textAlignLeft = 'bottomright'
 								
 								
-								
-								# draw directional dots and distance numbers
+								# draw placeholder dots and distance numbers
 								if (nodeLowerIsOnCurve and nodeUpperIsOnCurve) or (not nodeLowerIsOnCurve and nodeUpperIsOnCurve):
 									# lower dot
 									rectLower = NSMakeRect(dotLower.x - xDifferenceShifted - (diameter / 2), dotLower.y - (diameter / 2), diameter, diameter)
 									NSBezierPath.bezierPathWithOvalInRect_(rectLower).fill()
 									# lower number
-									if xDifference != 0:
-										self.drawTextAtPoint(str(abs(xDifference)), (dotLower.x - xDifferenceShifted - textOffsetX, dotLower.y - textOffsetY), fontColor = textColor, align = textAlignRight)
+									self.drawTextAtPoint(str(abs(xDifferenceRounded)), (dotLower.x - xDifferenceShifted - textOffsetX, dotLower.y - textOffsetY), fontColor = textColor, align = textAlignRight)
 								if (nodeLowerIsOnCurve and nodeUpperIsOnCurve) or (not nodeUpperIsOnCurve and nodeLowerIsOnCurve):
 									# upper dot
 									rectUpper = NSMakeRect(dotUpper.x + xDifferenceShifted - (diameter / 2), dotUpper.y - (diameter / 2), diameter, diameter)
 									NSBezierPath.bezierPathWithOvalInRect_(rectUpper).fill()
 									# upper number
-									if xDifference != 0:
-										self.drawTextAtPoint(str(abs(xDifference)), (dotUpper.x + xDifferenceShifted + textOffsetX, dotUpper.y - textOffsetY), fontColor = textColor, align = textAlignLeft)
+									self.drawTextAtPoint(str(abs(xDifferenceRounded)), (dotUpper.x + xDifferenceShifted + textOffsetX, dotUpper.y - textOffsetY), fontColor = textColor, align = textAlignLeft)
 	
 	@objc.python_method
 	def __file__(self):
