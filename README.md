@@ -2,7 +2,7 @@
 
 A plugin for the [Glyphs font editor](http://glyphsapp.com/).
 
-Highlights the path segments which angle is not precise (or not closest) to Italic Angle of the selected master and is within observed angle range (±10 degrees around Italic Angle). Also it adds placeholder dots around the nodes to indicate the horizontal direction and position for better node placement where segment's angle will be closest to Italic Angle.
+Highlights the path segments which angle is not precise (or not closest) to Italic Angle of the selected master and is within observed angle range (±10 degrees around Italic Angle). Also it adds placeholder dots around the nodes to indicate the horizontal direction and position for better node placement where segment's angle will be precise (or closest) to Italic Angle.
 
 ![](PreviewAnimation.gif)
 
