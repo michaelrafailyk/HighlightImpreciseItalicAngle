@@ -65,17 +65,7 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 								dotUpper = posOne
 							angleSegment = 90 - anglePrecise
 							xDifference = (dotLower.x + (dotUpper.y - dotLower.y) / tan(angleSegment * pi / 180)) - dotUpper.x
-							angleNewGreater = degrees(atan2(dotUpper.y - dotLower.y, (math.ceil(xDifference) + dotUpper.x) - dotLower.x))
-							angleNewGreater = -angleNewGreater - 90
-							if angleNewGreater <= -90: angleNewGreater += 180
-							angleNewGreater = round(angleNewGreater, 2)
-							# chose a coordinate with a greater new angle if precise angle is not available
-							# this case would happen for Italic Angle with not popular ratios like: 2:5 (12°), 3:10 (16,7°), 3:20 (8,53°)
-							# if greater new angle is not greater than 0.1 degree from precise Italic Angle, and if x difference is not greater than 0.1 point
-							if (angleNewGreater > anglePrecise and angleNewGreater < anglePrecise + 0.1) and (xDifference + 0.1 >= math.floor(xDifference + 1)):
-								xDifference = math.ceil(xDifference)
 							# choose a coordinate with a smaller new angle if precise angle is not available
-							# this case is more common for well chosen ratios like: 1:4 (14,04°), 1:5 (11,31°), 2:5 (21,8°)
 							xDifference = math.floor(round(xDifference, 1))
 							# if one point movement will make the angle closer to precise italic angle
 							if (abs(xDifference) >= 1):
