@@ -7,6 +7,7 @@ import objc
 from GlyphsApp import Glyphs, OFFCURVE
 from GlyphsApp.plugins import ReporterPlugin, NSColor, NSBezierPath, NSMakeRect
 from math import degrees, atan2, tan, pi
+import math
 
 class HighlightImpreciseItalicAngle(ReporterPlugin):
 	
@@ -18,19 +19,17 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 	def foreground(self, layer):
 		
 		# precise italic angle
-		anglePrecise = Glyphs.font.selectedFontMaster.italicAngle
+		anglePrecise = round(Glyphs.font.selectedFontMaster.italicAngle, 2)
 		# observed angle (+ and -) around precise angle
 		angleObserved = 10
 		lineThickness = 2
 		dotDiameter = 6
 		opacity = 0.8
-		# colors
-		colorRed = '#FF2850'
-		colorYellow = '#FF6428'
+		# light mode colors
+		color = '#FF2850'
 		# dark mode colors
 		if self.controller.graphicView().drawDark():
-			colorRed = '#FF6478'
-			colorYellow = '#FFA050'
+			color = '#FF6478'
 		
 		
 		
@@ -51,12 +50,11 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 					if not betweenHandles and not betweenOpenPath:
 						posOne = nodeOne.position
 						posTwo = nodeTwo.position
-						
 						# calculate angle between nodes
 						angle = degrees(atan2(posTwo.y - posOne.y, posTwo.x - posOne.x))
 						angle = -angle - 90
 						if angle <= -90: angle += 180
-						angle = round(angle, 1)
+						angle = round(angle, 2)
 						# angle is within the observed range but not precise
 						if (angle != anglePrecise) and (angle >= anglePrecise - angleObserved) and (angle <= anglePrecise + angleObserved):
 							# find the horizontal difference between current node position and correct (for italic angle) node position
@@ -67,35 +65,21 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 								dotUpper = posOne
 							angleSegment = 90 - anglePrecise
 							xDifference = (dotLower.x + (dotUpper.y - dotLower.y) / tan(angleSegment * pi / 180)) - dotUpper.x
+							angleNewGreater = degrees(atan2(dotUpper.y - dotLower.y, (math.ceil(xDifference) + dotUpper.x) - dotLower.x))
+							angleNewGreater = -angleNewGreater - 90
+							if angleNewGreater <= -90: angleNewGreater += 180
+							angleNewGreater = round(angleNewGreater, 2)
+							# chose a coordinate with a greater new angle if precise angle is not available
+							# this case would happen for Italic Angle with not popular ratios like: 2:5 (12°), 3:10 (16,7°), 3:20 (8,53°)
+							# if greater new angle is not greater than 0.1 degree from precise Italic Angle, and if x difference is not greater than 0.1 point
+							if (angleNewGreater > anglePrecise and angleNewGreater < anglePrecise + 0.1) and (xDifference + 0.1 >= math.floor(xDifference + 1)):
+								xDifference = math.ceil(xDifference)
+							# choose a coordinate with a smaller new angle if precise angle is not available
+							# this case is more common for well chosen ratios like: 1:4 (14,04°), 1:5 (11,31°), 2:5 (21,8°)
+							xDifference = math.floor(round(xDifference, 1))
 							# if one point movement will make the angle closer to precise italic angle
-							if (abs(xDifference) >= 1) or (abs(abs(round(xDifference, 1)) - 1) <= abs(round(xDifference, 1))):
-								# correct xDifferenceRounded if it is zero (after rounding) but the angle could be improved
-								xDifferenceRounded = round(xDifference)
-								if xDifferenceRounded == 0:
-									if xDifference > 0:
-										xDifferenceRounded = 1
-									elif xDifference < 0:
-										xDifferenceRounded = -1
+							if (abs(xDifference) >= 1):
 								
-								
-								
-								# find the angle difference before and after correction
-								angleNew = degrees(atan2(dotUpper.y - dotLower.y, (xDifferenceRounded + dotUpper.x) - dotLower.x))
-								angleNew = -angleNew - 90
-								if angleNew <= -90: angleNew += 180
-								angleNew = round(angleNew, 1)
-								angleDifferenceOld = round(abs(angle - anglePrecise), 1)
-								angleDifferenceNew = round(abs(angleNew - anglePrecise), 1)
-								
-								
-								
-								# colors
-								# set color to red
-								color = colorRed
-								# change color to yellow if the angle difference before and after correction (comparing to precise angle) is remain the same
-								# example – precise angle is 12, old angle is 11.7, new angle is 12.3, so the difference is still the same
-								if (angleDifferenceOld == angleDifferenceNew):
-									color = colorYellow
 								
 								
 								# draw line between nodes
@@ -109,26 +93,23 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 								
 								
 								
-								# drawing dots requires to recalculate the x difference for better dots placement in some cases
-								# if one node is handle and the other is smooth node, then use a next node on line segment instead of smooth node to calculate the x difference
+								# in some cases, drawing dots requires to recalculate the x difference for better dots placement
+								# if one node is a handle and the other is a smooth node, then use a next node on line segment instead of smooth node to calculate the x difference
 								# in this case only the dot around handle will be drawn an it will be located along the straight line
+								xDifferenceRecalculate = False
 								if nodeOne.smooth and (nodeOne.type != OFFCURVE) and (nodeTwo.type == OFFCURVE) and (nodes[i-2].type != OFFCURVE):
 									posOne = nodes[i-2].position
+									xDifferenceRecalculate = True
 								elif nodeTwo.smooth and (nodeTwo.type != OFFCURVE) and (nodeOne.type == OFFCURVE) and (nodes[i+1].type != OFFCURVE):
 									posTwo = nodes[i+1].position
-								dotLower = posOne
-								dotUpper = posTwo
-								if posOne.y > posTwo.y:
-									dotLower = posTwo
-									dotUpper = posOne
-								xDifference = (dotLower.x + (dotUpper.y - dotLower.y) / tan(angleSegment * pi / 180)) - dotUpper.x
-								# correct xDifferenceRounded if it is zero (after rounding) but the angle could be improved
-								xDifferenceRounded = round(xDifference)
-								if xDifferenceRounded == 0:
-									if xDifference > 0:
-										xDifferenceRounded = 1
-									elif xDifference < 0:
-										xDifferenceRounded = -1
+									xDifferenceRecalculate = True
+								if xDifferenceRecalculate:
+									dotLower = posOne
+									dotUpper = posTwo
+									if posOne.y > posTwo.y:
+										dotLower = posTwo
+										dotUpper = posOne
+									xDifference = (dotLower.x + (dotUpper.y - dotLower.y) / tan(angleSegment * pi / 180)) - dotUpper.x
 								
 								
 								
@@ -141,6 +122,14 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 										xDifferenceShifted += xShiftCorrection / scale
 									else:
 										xDifferenceShifted -= xShiftCorrection / scale
+								# rounded x difference will be displayed as a number next to a placeholder dots
+								xDifferenceRounded = round(xDifference)
+								# correct rounded x difference if it is zero (after rounding) but the node is not in the correct position
+								if xDifferenceRounded == 0:
+									if xDifference > 0:
+										xDifferenceRounded = 1
+									elif xDifference < 0:
+										xDifferenceRounded = -1
 								# don't draw dots if current node is on curve but opposite node is handle (draw dot only for handle in this case)
 								nodeLowerIsOnCurve = True
 								nodeUpperIsOnCurve = True
@@ -164,6 +153,7 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 									textOffsetX = -textOffsetX
 									textAlignRight = 'bottomleft'
 									textAlignLeft = 'bottomright'
+								
 								
 								
 								# draw placeholder dots and distance numbers
