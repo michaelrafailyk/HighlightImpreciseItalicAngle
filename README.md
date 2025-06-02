@@ -8,7 +8,7 @@ Highlights the path segments which angle is not precise (or not closest) to Ital
 
 # Italic Angle
 
-The Italic Angle is taken from Font Info -> Masters. If you work with italic master, the plugin will check the vertical segments and handles around Italic Angle. Also, it is worth noting that even upright styles have Italic Angle parameter set to 0. And if you work with upright master, the plugin will check all the vertical stems and handles that are not precise to 0 degree.
+The Italic Angle is taken from Font Info -> Masters.
 
 # Rounding options
 
