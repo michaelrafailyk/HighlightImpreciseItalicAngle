@@ -8,12 +8,28 @@ from GlyphsApp import Glyphs, OFFCURVE
 from GlyphsApp.plugins import ReporterPlugin, NSColor, NSBezierPath, NSMakeRect
 from math import degrees, atan2, tan, pi
 import math
+from Cocoa import NSMenuItem, NSOnState, NSOffState
 
 class HighlightImpreciseItalicAngle(ReporterPlugin):
 	
 	@objc.python_method
 	def settings(self):
 		self.menuName = 'Highlight Imprecise Italic Angle'
+		
+		self.roundAngleDownStatus = True
+		self.roundAngleDownMenu = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_("Round down to a smaller italic angle if it's between integer coordinates. When unchecked, it will round to a closest coordinate.", self.roundAngle, "")
+		self.roundAngleDownMenu.setState_(NSOnState)
+		self.generalContextMenus = [{"menu": self.roundAngleDownMenu}]
+	
+	def roundAngle(self):
+		if self.roundAngleDownStatus:
+			self.roundAngleDownStatus = False
+			self.roundAngleDownMenu.setState_(NSOffState)
+		else:
+			self.roundAngleDownStatus = True
+			self.roundAngleDownMenu.setState_(NSOnState)
+		if Glyphs.redraw:
+			Glyphs.redraw()
 	
 	@objc.python_method
 	def foreground(self, layer):
@@ -65,8 +81,12 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 								dotUpper = posOne
 							angleSegment = 90 - anglePrecise
 							xDifference = (dotLower.x + (dotUpper.y - dotLower.y) / tan(angleSegment * pi / 180)) - dotUpper.x
-							# choose a coordinate with a smaller new angle if precise angle is not available
-							xDifference = math.floor(round(xDifference, 1))
+							if self.roundAngleDownStatus:
+								# choose a coordinate with a smaller new angle if precise angle is not available (default)
+								xDifference = math.floor(round(xDifference, 1))
+							else:
+								# choose a closest coordinate if precise angle is not available
+								xDifference = round(xDifference)
 							# if one point movement will make the angle closer to precise italic angle
 							if (abs(xDifference) >= 1):
 								
