@@ -14,6 +14,8 @@ The Italic Angle is taken from Font Info -> Masters.
 
 If the precise italic angle lies between two integer coordinates, here are two options of rounding that could be toggled by right click context menu item called "Round down to a smaller italic angle if it's between integer coordinates. When unchecked, it will round to a closest coordinate.".
 
+![](PreviewContextMenuRoundingOptions.png)
+
 - When toggled on (by default), it will round down to a coordinate with a smaller angle. This option is better choice for popular ratios like 1:5 (11,31°) or 1:4 (14,04°), where won't be many of "almost precise" angle situations. This rounding down option was added by [request of Tim Ahrens](https://forum.glyphsapp.com/t/highlight-imprecise-italic-angle-reporter-plugin/33688/5).
 - When toggled off, it will round the angle to the closest coordinate. This option will be good for angles which are not based on well-chosen ratios, like just 11° or 12°, where will be a lot of "almost precise" angle situations when you prefer to round up to +0.02° instead of round down to -0.98°.
 
