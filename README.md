@@ -2,7 +2,7 @@
 
 A plugin for the [Glyphs font editor](http://glyphsapp.com/).
 
-Highlights the path segments which angle is not precise (or not closest) to Italic Angle of the selected master and is within observed angle range (±10 degrees around Italic Angle). Also it adds placeholder dots around the nodes to indicate the horizontal direction and position for better node placement where segment's angle will be precise to Italic Angle (or smaller of it if precise angle isn't available).
+Highlights the path segments which angle is not precise (or not closest) to Italic Angle of the selected master and is within observed angle range (±10 degrees around Italic Angle). Also it adds placeholder dots around the nodes to indicate the horizontal direction and position for better node placement where segment's angle will be precise to Italic Angle.
 
 ![](PreviewAnimation.gif)
 
@@ -10,9 +10,12 @@ Highlights the path segments which angle is not precise (or not closest) to Ital
 
 The Italic Angle is taken from Font Info -> Masters. If you work with italic master, the plugin will check the vertical segments and handles around Italic Angle. Also, it is worth noting that even upright styles have Italic Angle parameter set to 0. And if you work with upright master, the plugin will check all the vertical stems and handles that are not precise to 0 degree.
 
-# Rounding
+# Rounding options
 
-If the precise angle is not possible to fit because of grid rounding and integer coordinates, In this case the smaller (from italic) angle will be chosen.
+If the precise italic angle lies between two integer coordinates, here are two options of rounding that could be toggled by right click context menu item called "Round down to a smaller italic angle if it's between integer coordinates. When unchecked, it will round to a closest coordinate.".
+
+- When toggled on (by default), it will round down to a coordinate with a smaller angle. This option is better choice for popular ratios like 1:5 (11,31°) or 1:4 (14,04°), where won't be many of "almost precise" angle situations. This rounding down option was added by [request of Tim Ahrens](https://forum.glyphsapp.com/t/highlight-imprecise-italic-angle-reporter-plugin/33688/5).
+- When toggled off, it will round the angle to the closest coordinate. This option will be good for angles which are not based on well-chosen ratios, like just 11° or 12°, where will be a lot of "almost precise" angle situations when you prefer to round up to +0.02° instead of round down to -0.98°.
 
 # Distance
 
