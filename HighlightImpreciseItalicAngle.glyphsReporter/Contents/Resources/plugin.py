@@ -83,7 +83,7 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 							xDifference = (dotLower.x + (dotUpper.y - dotLower.y) / tan(angleSegment * pi / 180)) - dotUpper.x
 							if self.roundAngleDownStatus:
 								# choose a coordinate with a smaller new angle if precise angle is not available (default)
-								xDifference = math.floor(round(xDifference, 1))
+								xDifference = math.floor(xDifference)
 							else:
 								# choose a closest coordinate if precise angle is not available
 								xDifference = round(xDifference)
