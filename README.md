@@ -6,13 +6,13 @@ A plugin for the [Glyphs font editor](http://glyphsapp.com/) that highlights the
 
 # Italic Angles
 
-Standard Italic Angle is set in Font Info > Masters > Italic Angle. Additional Italic Angles are set in Font Info > Masters > Number Values. You can add as many angles to check as you need. The name of each additional angle should contain "Italic Angle", like for example "Italic Angle for x-height (cyan highlight color)".
+Standard Italic Angle is set in Font Info > Masters > Metrics > Italic Angle. Additional Italic Angles are set in Font Info > Masters > Number Values. You can add as many angles to check as you need. The name of each additional angle should contain "Italic Angle", like for example "Italic Angle for x-height (cyan highlight color)".
 
 ![](PreviewAngles.png)
 
 # Colors
 
-If you need to check only one standard Italic Angle, it will be highlighted with red. However, the tool has 5 different colors (green, yellow, red, purple, cyan) for 5 different Italic Angles to check. If you specify more than 5 angles (like standard one + 4 custom ones), the extra colors will be repeated cyclically. Standard Italic Angle is always highlighted in red. The two greater (than Italic) angles are highlighted in purple and cyan. The two smaller (than Italic) angles are highlighted in yellow and green.
+The tool has 5 predefined colors (green, yellow, red, purple, cyan) for 5 different Italic Angles to check (like standard one + 4 custom ones). Standard Italic Angle is always highlighted in red. The two greater (than Italic) angles are highlighted in purple and cyan. The two smaller (than Italic) angles are highlighted in yellow and green.
 
 ![](PreviewColors.gif)
 
