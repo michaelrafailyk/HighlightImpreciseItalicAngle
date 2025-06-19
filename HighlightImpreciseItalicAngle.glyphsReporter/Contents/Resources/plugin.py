@@ -165,19 +165,15 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 							xDifference = xDifferencePrecise
 							# depending on the selected rounding mode
 							if self.roundAngleDownMode:
-								
-								# fragment is temporary disabled – need to figure out the optimal threshold values
-								# after accepting, the fragment should be copied to round down parts in a handle+line and handle+handle scenarios
-								# add a small tolerance to round up to a coordinate with a greater new angle
-								# if a distance to a greater .x coordinate is smaller than 0.1 point and its angle is not greater of Italic Angle + 0.1 degree
-								# angleGreater = self.getAngle(posLower.x, posLower.y, math.ceil(xDifference) + posUpper.x, posUpper.y)
-								# if (angleGreater > ItalicAngle and angleGreater < ItalicAngle + 0.1) and (xDifference + 0.2 >= math.floor(xDifference + 1)):
-								# 	xDifference = math.ceil(xDifference)
-								
+								# add a small tolerance allowing round up if the closer coordinate is closer than 0.2 point and its greater angle is less than Italic Angle + 0.1 degree
+								angleGreater = self.getAngle(posLower.x, posLower.y, math.ceil(xDifference) + posUpper.x, posUpper.y)
+								if (angleGreater > ItalicAngle and angleGreater < ItalicAngle + 0.1) and (xDifference + 0.2 >= math.floor(xDifference + 1)):
+									xDifference = math.ceil(xDifference)
 								# round down to .x coordinate with a smaller angle if precise Italic Angle can't fit the integer coordinate (default rounding mode)
-								xDifference = math.floor(xDifference)
+								else:
+									xDifference = math.floor(xDifference)
 							else:
-								# choose a closest .x coordinate if precise Italic Angle can't fit the integer coordinate
+								# round to a closest .x coordinate if precise Italic Angle can't fit the integer coordinate
 								xDifference = round(xDifference)
 							# if one point movement will make the angle closer to precise italic angle
 							if (abs(xDifference) >= 1):
@@ -190,12 +186,9 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 								# drawing dots requires to recalculate the x difference for better dots placement
 								# if one node is a handle and the other is a smooth node, then use a next node on line segment instead of smooth node to calculate the x difference
 								# in this case only the dot around handle will be drawn an it will be located along the straight line
-								line_handle = False
 								# additionally prevent to highlight handle if line has correct angle and handle is not broken
+								line_handle = False
 								line_handle_haveGoodAngle = False
-								xDifferenceLineRounded = False
-								xDifferenceLine = False
-								xDifferenceHandle = False
 								linePosOne = False
 								linePosTwo = False
 								# line before current handle
@@ -226,14 +219,21 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 									xDifferenceLine = (linePosLower.x + (linePosUpper.y - linePosLower.y) / tan(angleSegment * pi / 180)) - linePosUpper.x
 									xDifferenceHandle = round(xDifferencePrecise, 2)
 									if self.roundAngleDownMode:
-										xDifferenceLineRounded = math.floor(xDifferenceLine)
+										# add a small tolerance allowing round up if the closer coordinate is closer than 0.2 point and its greater angle is less than Italic Angle + 0.1 degree
+										angleGreater = self.getAngle(linePosLower.x, linePosLower.y, math.ceil(xDifferenceLine) + linePosUpper.x, linePosUpper.y)
+										if (angleGreater > ItalicAngle and angleGreater < ItalicAngle + 0.1) and (xDifferenceLine + 0.2 >= math.floor(xDifferenceLine + 1)):
+											xDifferenceLine = math.ceil(xDifferenceLine)
+										# round down to .x coordinate with a smaller angle if precise Italic Angle can't fit the integer coordinate (default rounding mode)
+										else:
+											xDifferenceLine = math.floor(xDifferenceLine)
 									else:
-										xDifferenceLineRounded = round(xDifferenceLine)
+										# round to a closest .x coordinate if precise Italic Angle can't fit the integer coordinate
+										xDifferenceLine = round(xDifferenceLine)
 									angleLine = self.getAngle(linePosOne.x, linePosOne.y, linePosTwo.x, linePosTwo.y)
 									# line has correct italic angle but handle is not
 									# the difference of angles is very small so the handle is not broken after interpolation
 									# it work fine for long segments, however, in very short segments the handle can still be highlighted
-									if (xDifferenceLineRounded == 0) and (xDifferenceHandle != 0) and (abs(angleLine - angle) < 0.5):
+									if (xDifferenceLine == 0) and (xDifferenceHandle != 0) and (abs(angleLine - angle) < 0.5):
 										line_handle_haveGoodAngle = True
 								
 								
@@ -263,8 +263,10 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 									# check if the opposite handle is in the correct position (not highlighted)
 									xDifferenceHandleOpposite = (handleOppositePosLower.x + (handleOppositePosUpper.y - handleOppositePosLower.y) / tan(angleSegment * pi / 180)) - handleOppositePosUpper.x
 									if self.roundAngleDownMode:
+										# round down to .x coordinate with a smaller angle if precise Italic Angle can't fit the integer coordinate (default rounding mode)
 										xDifferenceHandleOpposite = math.floor(xDifferenceHandleOpposite)
 									else:
+										# round to a closest .x coordinate if precise Italic Angle can't fit the integer coordinate
 										xDifferenceHandleOpposite = round(xDifferenceHandleOpposite)
 									# get the angle of opposite handle
 									angleOpposite = self.getAngle(handleOppositePosLower.x, handleOppositePosLower.y, handleOppositePosUpper.x, handleOppositePosUpper.y)
