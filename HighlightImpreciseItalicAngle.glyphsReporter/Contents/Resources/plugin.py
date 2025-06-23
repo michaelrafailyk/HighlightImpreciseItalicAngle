@@ -3,32 +3,45 @@
 # Highlight Imprecise Italic Angle
 # https://github.com/michaelrafailyk/HighlightImpreciseItalicAngle
 
+from __future__ import division
 import objc
 from GlyphsApp import Glyphs, OFFCURVE
 from GlyphsApp.plugins import ReporterPlugin, NSColor, NSBezierPath, NSMakeRect
 from math import degrees, atan2, tan, pi
 import math
-from Cocoa import NSMenuItem, NSOnState, NSOffState
 
 class HighlightImpreciseItalicAngle(ReporterPlugin):
+	
+	# reference to the slider
+	sliderMenuView = objc.IBOutlet()
+	textField = objc.IBOutlet()
+	# threshold for rounding of Italic Angle with non-integer coordinate
+	angleRoundingThreshold = 0.5
 	
 	@objc.python_method
 	def settings(self):
 		self.menuName = 'Highlight Imprecise Italic Angle'
-		# context menu item for switchings the rounding mode
-		self.roundAngleDownMode = True
-		self.roundAngleDownMenu = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_("Round down to a coordinate with a smaller (of italic) angle. When unchecked – round to a closest coordinate.", self.roundAngle, "")
-		self.roundAngleDownMenu.setState_(NSOnState)
-		self.generalContextMenus = [{"menu": self.roundAngleDownMenu}]
+		# load slider and add it to context menu
+		self.loadNib("SliderView", __file__)
+		self.generalContextMenus = [{"view": self.sliderMenuView}]
 	
-	# function for switching the rounding mode
-	def roundAngle(self):
-		if self.roundAngleDownMode:
-			self.roundAngleDownMode = False
-			self.roundAngleDownMenu.setState_(NSOffState)
-		else:
-			self.roundAngleDownMode = True
-			self.roundAngleDownMenu.setState_(NSOnState)
+	# adjust the tolerance of rounding direction of Italic Angle with decimal coordinate, to the integer coordinate
+	@objc.IBAction
+	def slider_(self, sender):
+		# turn the rounding gravite into rounding threshold
+		self.angleRoundingThreshold = round(1 - sender.floatValue(), 1)
+		# update slider label
+		if self.angleRoundingThreshold == 1:
+			self.textField.setStringValue_('Always round to a smaller angle')
+		elif self.angleRoundingThreshold < 1 and self.angleRoundingThreshold > 0.5:
+			self.textField.setStringValue_('Round to a smaller angle')
+		elif self.angleRoundingThreshold == 0.5:
+			self.textField.setStringValue_('Round angle to closest coordinate')
+		elif self.angleRoundingThreshold < 0.5 and self.angleRoundingThreshold > 0:
+			self.textField.setStringValue_('Round to a greater angle')
+		elif self.angleRoundingThreshold == 0:
+			self.textField.setStringValue_('Always round to a greater angle')
+		# update interface
 		if Glyphs.redraw:
 			Glyphs.redraw()
 	
@@ -163,18 +176,21 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 							angleSegment = 90 - ItalicAngle
 							xDifferencePrecise = (posLower.x + (posUpper.y - posLower.y) / tan(angleSegment * pi / 180)) - posUpper.x
 							xDifference = xDifferencePrecise
-							# depending on the selected rounding mode
-							if self.roundAngleDownMode:
-								# add a small tolerance allowing round up if the closer coordinate is closer than 0.2 point and its greater angle is less than Italic Angle + 0.1 degree
-								angleGreater = self.getAngle(posLower.x, posLower.y, math.ceil(xDifference) + posUpper.x, posUpper.y)
-								if (angleGreater > ItalicAngle and angleGreater < ItalicAngle + 0.1) and (xDifference + 0.2 >= math.floor(xDifference + 1)):
-									xDifference = math.ceil(xDifference)
-								# round down to .x coordinate with a smaller angle if precise Italic Angle can't fit the integer coordinate (default rounding mode)
-								else:
-									xDifference = math.floor(xDifference)
-							else:
-								# round to a closest .x coordinate if precise Italic Angle can't fit the integer coordinate
+							# round to an integer coordinate if coordinate for precise Italic Angle is decimal
+							# depending on the rounding value set in context menu slider
+							if self.angleRoundingThreshold == 0.5:
+								# round to a closest x coordinate
 								xDifference = round(xDifference)
+							else:
+								xThreshold = xDifference - math.floor(xDifference + 1)
+								if xThreshold < 0:
+									xThreshold = xThreshold + 1
+								# round down to a coordinate with a smaller angle
+								if xThreshold < self.angleRoundingThreshold:
+									xDifference = math.floor(xDifference)
+								# round up to a coordinate with a greater angle
+								else:
+									xDifference = math.ceil(xDifference)
 							# if one point movement will make the angle closer to precise italic angle
 							if (abs(xDifference) >= 1):
 								highlightPosOne = posOne
@@ -218,17 +234,21 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 									# calculate x difference for line segment and handle segment
 									xDifferenceLine = (linePosLower.x + (linePosUpper.y - linePosLower.y) / tan(angleSegment * pi / 180)) - linePosUpper.x
 									xDifferenceHandle = round(xDifferencePrecise, 2)
-									if self.roundAngleDownMode:
-										# add a small tolerance allowing round up if the closer coordinate is closer than 0.2 point and its greater angle is less than Italic Angle + 0.1 degree
-										angleGreater = self.getAngle(linePosLower.x, linePosLower.y, math.ceil(xDifferenceLine) + linePosUpper.x, linePosUpper.y)
-										if (angleGreater > ItalicAngle and angleGreater < ItalicAngle + 0.1) and (xDifferenceLine + 0.2 >= math.floor(xDifferenceLine + 1)):
-											xDifferenceLine = math.ceil(xDifferenceLine)
-										# round down to .x coordinate with a smaller angle if precise Italic Angle can't fit the integer coordinate (default rounding mode)
-										else:
-											xDifferenceLine = math.floor(xDifferenceLine)
-									else:
-										# round to a closest .x coordinate if precise Italic Angle can't fit the integer coordinate
+									# round to an integer coordinate if coordinate for precise Italic Angle is decimal
+									# depending on the rounding value set in context menu slider
+									if self.angleRoundingThreshold == 0.5:
+										# round to a closest x coordinate
 										xDifferenceLine = round(xDifferenceLine)
+									else:
+										xThreshold = xDifferenceLine - math.floor(xDifferenceLine + 1)
+										if xThreshold < 0:
+											xThreshold = xThreshold + 1
+										# round down to a coordinate with a smaller angle
+										if xThreshold < self.angleRoundingThreshold:
+											xDifferenceLine = math.floor(xDifferenceLine)
+										# round up to a coordinate with a greater angle
+										else:
+											xDifferenceLine = math.ceil(xDifferenceLine)
 									angleLine = self.getAngle(linePosOne.x, linePosOne.y, linePosTwo.x, linePosTwo.y)
 									# line has correct italic angle but handle is not
 									# the difference of angles is very small so the handle is not broken after interpolation
@@ -262,12 +282,21 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 										handleOppositePosUpper = handleOppositePosOne
 									# check if the opposite handle is in the correct position (not highlighted)
 									xDifferenceHandleOpposite = (handleOppositePosLower.x + (handleOppositePosUpper.y - handleOppositePosLower.y) / tan(angleSegment * pi / 180)) - handleOppositePosUpper.x
-									if self.roundAngleDownMode:
-										# round down to .x coordinate with a smaller angle if precise Italic Angle can't fit the integer coordinate (default rounding mode)
-										xDifferenceHandleOpposite = math.floor(xDifferenceHandleOpposite)
-									else:
-										# round to a closest .x coordinate if precise Italic Angle can't fit the integer coordinate
+									# round to an integer coordinate if coordinate for precise Italic Angle is decimal
+									# depending on the rounding value set in context menu slider
+									if self.angleRoundingThreshold == 0.5:
+										# round to a closest x coordinate
 										xDifferenceHandleOpposite = round(xDifferenceHandleOpposite)
+									else:
+										xThreshold = xDifferenceHandleOpposite - math.floor(xDifferenceHandleOpposite + 1)
+										if xThreshold < 0:
+											xThreshold = xThreshold + 1
+										# round down to a coordinate with a smaller angle
+										if xThreshold < self.angleRoundingThreshold:
+											xDifferenceHandleOpposite = math.floor(xDifferenceHandleOpposite)
+										# round up to a coordinate with a greater angle
+										else:
+											xDifferenceHandleOpposite = math.ceil(xDifferenceHandleOpposite)
 									# get the angle of opposite handle
 									angleOpposite = self.getAngle(handleOppositePosLower.x, handleOppositePosLower.y, handleOppositePosUpper.x, handleOppositePosUpper.y)
 									# opposite handle is in the correct position (for italic angle) but the current handle is not
@@ -286,8 +315,14 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 											# this average values will be needed to check what is closer to Italic Angle
 											angleAverage = (angle + angleOpposite) / 2
 											angleAverageNew = (angleNew + angleNewOpposite) / 2
-											# round down mode
-											if self.roundAngleDownMode:
+											# depending on the rounding value set in context menu slider
+											# if set rounding to a closest coordinate (or rounding up)
+											if self.angleRoundingThreshold <= 0.5:
+												# if current average angle is closer to Italic Angle than avarage angle after possible correction
+												if abs(ItalicAngle - angleAverage) < abs(ItalicAngle - angleAverageNew):
+													handle_handle_haveGoodAngle = True
+											# if set rounding down
+											else:
 												# all angles are lower than Italic Angle – allow to check what will be closer
 												if angle <= ItalicAngle and angleOpposite <= ItalicAngle and angleNew <= ItalicAngle and angleNewOpposite <= ItalicAngle:
 													# if current average angle is closer to Italic Angle than avarage angle after possible correction
@@ -295,11 +330,6 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 														handle_handle_haveGoodAngle = True
 												# both angles before correction are smaller of Italic Angle but after correction one of them will be larger of Italic Angle
 												elif angle <= ItalicAngle and angleOpposite <= ItalicAngle and (angleNew > ItalicAngle or angleNewOpposite > ItalicAngle):
-													handle_handle_haveGoodAngle = True
-											# round to a closest coordinate mode
-											else:
-												# if current average angle is closer to Italic Angle than avarage angle after possible correction
-												if abs(ItalicAngle - angleAverage) < abs(ItalicAngle - angleAverageNew):
 													handle_handle_haveGoodAngle = True
 								
 								
