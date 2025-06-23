@@ -26,10 +26,11 @@ If the precise Italic Angle lies between two integer coordinates, it will be rou
 
 ![](PreviewRounding.gif)
 
-- Leftmost position – always round down to a coordinate with a smaller angle.
-- From leftmost to middle position – prefere round down to a coordinate with a smaller angle. The closer to left side means more rounding down cases.
-- Middle position (default) – round the angle to a closest coordinate.
-- From middle to rightmost position – prefere round up to a coordinate with a greater angle. The closer to right side means more rounding up cases.
+- Leftmost position (0) – always round down to a coordinate with a smaller angle.
+- From leftmost to middle position (0–0.5) – prefere round down to a coordinate with a smaller angle. The closer to left side means more rounding down cases.
+- Middle position (0.5, default) – round the angle to a closest coordinate.
+- From middle to rightmost position (0.5–1) – prefere round up to a coordinate with a greater angle. The closer to right side means more rounding up cases.
+- Rightmost position (1) – always round up to a coordinate with a greater angle.
 
 # Distance
 
