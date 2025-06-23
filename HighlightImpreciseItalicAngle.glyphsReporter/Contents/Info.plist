@@ -13,9 +13,9 @@
 	<key>CFBundleName</key>
 	<string>Highlight Imprecise Italic Angle</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.2</string>
+	<string>3.0</string>
 	<key>CFBundleVersion</key>
-	<string>2.2.0</string>
+	<string>3.0.0</string>
 	<key>UpdateFeedURL</key>
 	<string>https://github.com/michaelrafailyk/HighlightImpreciseItalicAngle/blob/main/HighlightImpreciseItalicAngle.glyphsReporter/Contents/Info.plist</string>
 	<key>productPageURL</key>
