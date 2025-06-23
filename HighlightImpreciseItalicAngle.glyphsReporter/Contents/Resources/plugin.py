@@ -36,7 +36,7 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 		elif self.angleRoundingThreshold < 1 and self.angleRoundingThreshold > 0.5:
 			self.textField.setStringValue_('Round to a smaller angle')
 		elif self.angleRoundingThreshold == 0.5:
-			self.textField.setStringValue_('Round angle to closest coordinate')
+			self.textField.setStringValue_('Round angle to a closest coordinate')
 		elif self.angleRoundingThreshold < 0.5 and self.angleRoundingThreshold > 0:
 			self.textField.setStringValue_('Round to a greater angle')
 		elif self.angleRoundingThreshold == 0:
