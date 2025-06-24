@@ -18,7 +18,7 @@ Additional angles are set in Font Info > Masters > Number Values. The name of ea
 
 The tool has 5 predefined colors (green, yellow, red, purple, cyan) for 5 different angles to check (like standard Italic Angle + 4 custom ones). Standard Italic Angle is always highlighted in red. The two greater (than Italic) angles are highlighted in purple and cyan. The two smaller (than Italic) angles are highlighted in yellow and green.
 
-![](PreviewColors.gif)
+![](PreviewColors.png)
 
 # Rounding
 
