@@ -12,11 +12,12 @@ import math
 
 class HighlightImpreciseItalicAngle(ReporterPlugin):
 	
+	# threshold for rounding of Italic Angle with non-integer coordinate
+	angleRoundingThreshold = 0.5
 	# reference to the slider
 	sliderMenuView = objc.IBOutlet()
 	textField = objc.IBOutlet()
-	# threshold for rounding of Italic Angle with non-integer coordinate
-	angleRoundingThreshold = 0.5
+	slider = objc.IBOutlet()
 	
 	@objc.python_method
 	def settings(self):
@@ -25,11 +26,17 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 		self.loadNib("SliderView", __file__)
 		self.generalContextMenus = [{"view": self.sliderMenuView}]
 	
+	# load user settings for slider
+	def awakeFromNib(self):
+		sliderSavedValue = Glyphs.defaults.get("com.michaelrafailyk.HighlightImpreciseItalicAngle.sliderValue", 0.5)
+		self.slider.setFloatValue_(sliderSavedValue)
+	
 	# adjust the tolerance of rounding direction of Italic Angle with decimal coordinate, to the integer coordinate
 	@objc.IBAction
 	def slider_(self, sender):
+		sliderValue = sender.floatValue()
 		# turn the rounding gravite into rounding threshold
-		self.angleRoundingThreshold = round(1 - sender.floatValue(), 1)
+		self.angleRoundingThreshold = round(1 - sliderValue, 1)
 		# update slider label
 		if self.angleRoundingThreshold == 1:
 			self.textField.setStringValue_('Always round to a smaller angle')
@@ -44,6 +51,8 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 		# update interface
 		if Glyphs.redraw:
 			Glyphs.redraw()
+		# save user settings
+		Glyphs.defaults["com.michaelrafailyk.HighlightImpreciseItalicAngle.sliderValue"] = sliderValue
 	
 	# function for getting angle between two nodes
 	@objc.python_method

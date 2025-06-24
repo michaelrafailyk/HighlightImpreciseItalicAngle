@@ -7,6 +7,7 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="HighlightImpreciseItalicAngle">
             <connections>
+                <outlet property="slider" destination="6o9-2Q-tWh" id="hyS-Bc-CG2"/>
                 <outlet property="sliderMenuView" destination="c22-O7-iKe" id="UuK-bz-gNN"/>
                 <outlet property="textField" destination="PWc-Dt-orN" id="wuK-Fz-YiT"/>
             </connections>
