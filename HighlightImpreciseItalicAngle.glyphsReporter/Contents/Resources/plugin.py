@@ -26,15 +26,10 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 		self.loadNib("SliderView", __file__)
 		self.generalContextMenus = [{"view": self.sliderMenuView}]
 	
-	# load user settings for slider
-	def awakeFromNib(self):
-		sliderSavedValue = Glyphs.defaults.get("com.michaelrafailyk.HighlightImpreciseItalicAngle.sliderValue", 0.5)
-		self.slider.setFloatValue_(sliderSavedValue)
-	
 	# adjust the tolerance of rounding direction of Italic Angle with decimal coordinate, to the integer coordinate
-	@objc.IBAction
-	def slider_(self, sender):
-		sliderValue = sender.floatValue()
+	# save threshold and update slider label
+	@objc.python_method
+	def adjustAngleRounding(self, sliderValue):
 		# turn the rounding gravite into rounding threshold
 		self.angleRoundingThreshold = round(1 - sliderValue, 1)
 		# update slider label
@@ -48,13 +43,25 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 			self.textField.setStringValue_('Round to a greater angle')
 		elif self.angleRoundingThreshold == 0:
 			self.textField.setStringValue_('Always round to a greater angle')
-		# update interface
-		if Glyphs.redraw:
-			Glyphs.redraw()
+	
+	# update slider using previously saved value
+	def awakeFromNib(self):
+		sliderSavedValue = Glyphs.defaults.get("com.michaelrafailyk.HighlightImpreciseItalicAngle.sliderValue", 0.5)
+		self.slider.setFloatValue_(sliderSavedValue)
+		self.adjustAngleRounding(sliderSavedValue)
+	
+	# get value from slider
+	@objc.IBAction
+	def slider_(self, sender):
+		sliderValue = sender.floatValue()
+		self.adjustAngleRounding(sliderValue)
 		# save user settings
 		Glyphs.defaults["com.michaelrafailyk.HighlightImpreciseItalicAngle.sliderValue"] = sliderValue
+		# update interface to apply changes
+		if Glyphs.redraw:
+			Glyphs.redraw()
 	
-	# function for getting angle between two nodes
+	# get angle between two nodes
 	@objc.python_method
 	def getAngle(self, aX, aY, bX, bY):
 		angle = degrees(atan2(bY - aY, bX - aX))
@@ -65,10 +72,6 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 	
 	@objc.python_method
 	def foreground(self, layer):
-		
-		
-		
-		# user settings
 		# observed angle around Italic Angle (if set to 10 it means from IA-10 degrees to IA+10 degrees, so the range will be 20 degrees in total)
 		angleObserved = 10
 		highlightThickness = 2
