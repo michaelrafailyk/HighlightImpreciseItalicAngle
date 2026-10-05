@@ -6,26 +6,28 @@
 from __future__ import division
 import objc
 from GlyphsApp import Glyphs, OFFCURVE
-from GlyphsApp.plugins import ReporterPlugin, NSColor, NSBezierPath, NSMakeRect
+from GlyphsApp.plugins import ReporterPlugin
+from Cocoa import NSColor, NSBezierPath, NSMakeRect
 from math import degrees, atan2, tan, pi
 import math
 
+
 class HighlightImpreciseItalicAngle(ReporterPlugin):
-	
+
 	# threshold for rounding of Italic Angle with non-integer coordinate
 	angleRoundingThreshold = 0.5
 	# reference to the slider
 	sliderMenuView = objc.IBOutlet()
 	textField = objc.IBOutlet()
 	slider = objc.IBOutlet()
-	
+
 	@objc.python_method
 	def settings(self):
 		self.menuName = 'Highlight Imprecise Italic Angle'
 		# load slider and add it to context menu
 		self.loadNib("SliderView", __file__)
 		self.generalContextMenus = [{"view": self.sliderMenuView}]
-	
+
 	# adjust the tolerance of rounding direction of Italic Angle with decimal coordinate, to the integer coordinate
 	# save threshold and update slider label
 	@objc.python_method
@@ -43,13 +45,13 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 			self.textField.setStringValue_('Round to a greater angle')
 		elif self.angleRoundingThreshold == 0:
 			self.textField.setStringValue_('Always round to a greater angle')
-	
+
 	# update slider using previously saved value
 	def awakeFromNib(self):
 		sliderSavedValue = Glyphs.defaults.get("com.michaelrafailyk.HighlightImpreciseItalicAngle.sliderValue", 0.5)
 		self.slider.setFloatValue_(sliderSavedValue)
 		self.adjustAngleRounding(sliderSavedValue)
-	
+
 	# get value from slider
 	@objc.IBAction
 	def slider_(self, sender):
@@ -60,7 +62,7 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 		# update interface to apply changes
 		if Glyphs.redraw:
 			Glyphs.redraw()
-	
+
 	# get angle between two nodes
 	@objc.python_method
 	def getAngle(self, aX, aY, bX, bY):
@@ -69,7 +71,7 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 		if angle <= -90: angle += 180
 		angle = round(angle, 2)
 		return angle
-	
+
 	@objc.python_method
 	def foreground(self, layer):
 		# observed angle around Italic Angle (if set to 10 it means from IA-10 degrees to IA+10 degrees, so the range will be 20 degrees in total)
@@ -94,19 +96,18 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 				'#C85AFF',
 				'#00A0FF'
 			]
-		
-		
-		
+
+
 		font = Glyphs.font
 		toolSelect = font.tool == 'SelectTool'
 		toolPen = font.tool == 'DrawTool'
-		toolTempPreview = font.parent.windowController().toolTempSelection() != None
+		toolTempPreview = font.parent.windowController().toolTempSelection() is not None
 		if (toolSelect or toolPen) and not toolTempPreview:
 			master = font.selectedFontMaster
 			# get default Italic Angle of a current master, and set default color
 			ItalicAngle = round(master.italicAngle, 2)
 			color = colors[colorDefault]
-			
+
 			# get a custom Italic Angles if set in Font Info > Masters > Number Values
 			ItalicAngles = []
 			ItalicAnglesDefault = None
@@ -121,13 +122,13 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 				ItalicAngles.append(ItalicAngle)
 				ItalicAngles.sort()
 				ItalicAnglesDefault = ItalicAngles.index(ItalicAngle)
-			
+
 			# check the angle of each path segment
 			for path in layer.paths:
 				nodes = path.nodes
 				nodesCount = len(nodes)
 				for i in range(nodesCount):
-					nodeOne = nodes[(i-1) % nodesCount]
+					nodeOne = nodes[(i - 1) % nodesCount]
 					nodeTwo = nodes[i]
 					# do not display highlight between the handles, as well as between the last and first node of an open path
 					betweenHandles = nodeOne.type == OFFCURVE and nodeTwo.type == OFFCURVE
@@ -136,13 +137,13 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 						posOne = nodeOne.position
 						posTwo = nodeTwo.position
 						# check if there is a "handle + tangens node + line" or "handle + tangens node + handle" scenario
-						thisHandle_prevLine = nodeOne.smooth and (nodeOne.type != OFFCURVE) and (nodeTwo.type == OFFCURVE) and (nodes[(i-2) % nodesCount].type != OFFCURVE)
-						thisHandle_nextLine = nodeTwo.smooth and (nodeTwo.type != OFFCURVE) and (nodeOne.type == OFFCURVE) and (nodes[(i+1) % nodesCount].type != OFFCURVE)
-						thisHandle_prevHandle = nodeOne.smooth and (nodeOne.type != OFFCURVE) and (nodeTwo.type == OFFCURVE) and (nodes[(i-2) % nodesCount].type == OFFCURVE)
-						thisHandle_nextHandle = nodeTwo.smooth and (nodeTwo.type != OFFCURVE) and (nodeOne.type == OFFCURVE) and (nodes[(i+1) % nodesCount].type == OFFCURVE)
+						thisHandle_prevLine = nodeOne.smooth and (nodeOne.type != OFFCURVE) and (nodeTwo.type == OFFCURVE) and (nodes[(i - 2) % nodesCount].type != OFFCURVE)
+						thisHandle_nextLine = nodeTwo.smooth and (nodeTwo.type != OFFCURVE) and (nodeOne.type == OFFCURVE) and (nodes[(i + 1) % nodesCount].type != OFFCURVE)
+						thisHandle_prevHandle = nodeOne.smooth and (nodeOne.type != OFFCURVE) and (nodeTwo.type == OFFCURVE) and (nodes[(i - 2) % nodesCount].type == OFFCURVE)
+						thisHandle_nextHandle = nodeTwo.smooth and (nodeTwo.type != OFFCURVE) and (nodeOne.type == OFFCURVE) and (nodes[(i + 1) % nodesCount].type == OFFCURVE)
 						# calculate angle between nodes
 						angle = self.getAngle(posOne.x, posOne.y, posTwo.x, posTwo.y)
-						
+
 						# if custom Italic Angles are set
 						if ItalicAngles:
 							# make the alias of angle (for internal checking) so it could be modified without changing the angle itself
@@ -150,9 +151,9 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 							# for "handle + tangens node + line" case – use line angle instead of handle angle
 							# this guarantees that both handle and line will be aligned to the same Italic Angle and highlighted with the same color
 							if thisHandle_prevLine:
-								angleAlias = self.getAngle(posOne.x, posOne.y, nodes[(i-2) % nodesCount].position.x, nodes[(i-2) % nodesCount].position.y)
+								angleAlias = self.getAngle(posOne.x, posOne.y, nodes[(i - 2) % nodesCount].position.x, nodes[(i - 2) % nodesCount].position.y)
 							elif thisHandle_nextLine:
-								angleAlias = self.getAngle(posTwo.x, posTwo.y, nodes[(i+1) % nodesCount].position.x, nodes[(i+1) % nodesCount].position.y)
+								angleAlias = self.getAngle(posTwo.x, posTwo.y, nodes[(i + 1) % nodesCount].position.x, nodes[(i + 1) % nodesCount].position.y)
 							# find a closest Italic Angle from all default one and custom ones
 							if angleAlias <= ItalicAngles[0]:
 								ItalicAnglesClosest = 0
@@ -176,7 +177,7 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 							color = colors[colorCustom]
 							# custom Italic Angle
 							ItalicAngle = ItalicAngles[ItalicAnglesClosest]
-						
+
 						# angle is within the observed range but not precise, and it's not left/right extremes with 0 degree angle
 						if (angle != 0) and (angle != ItalicAngle) and (angle >= ItalicAngle - angleObserved) and (angle <= ItalicAngle + angleObserved):
 							# find the horizontal difference between current node position and correct (for italic angle) node position
@@ -207,9 +208,7 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 							if (abs(xDifference) >= 1):
 								highlightPosOne = posOne
 								highlightPosTwo = posTwo
-								
-								
-								
+
 								# line + tangent handle scenario
 								# drawing dots requires to recalculate the x difference for better dots placement
 								# if one node is a handle and the other is a smooth node, then use a next node on line segment instead of smooth node to calculate the x difference
@@ -222,15 +221,15 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 								# line before current handle
 								if thisHandle_prevLine:
 									line_handle = True
-									posOne = nodes[(i-2) % nodesCount].position
-									linePosOne = nodes[(i-2) % nodesCount].position
-									linePosTwo = nodes[(i-1) % nodesCount].position
+									posOne = nodes[(i - 2) % nodesCount].position
+									linePosOne = nodes[(i - 2) % nodesCount].position
+									linePosTwo = nodes[(i - 1) % nodesCount].position
 								# line after current handle
 								elif thisHandle_nextLine:
 									line_handle = True
-									posTwo = nodes[(i+1) % nodesCount].position
+									posTwo = nodes[(i + 1) % nodesCount].position
 									linePosOne = nodes[i].position
-									linePosTwo = nodes[(i+1) % nodesCount].position
+									linePosTwo = nodes[(i + 1) % nodesCount].position
 								if line_handle:
 									posLower = posOne
 									posUpper = posTwo
@@ -267,9 +266,8 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 									# it work fine for long segments, however, in very short segments the handle can still be highlighted
 									if (xDifferenceLine == 0) and (xDifferenceHandle != 0) and (abs(angleLine - angle) < 0.5):
 										line_handle_haveGoodAngle = True
-								
-								
-								
+
+
 								# handle + handle scenario
 								# for preventing to always highlight one of handles around a smooth node if there is no way to set both of them simultaneously to a better position
 								handle_handle = False
@@ -279,13 +277,13 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 								# opposite handle before current handle
 								if thisHandle_prevHandle:
 									handle_handle = True
-									handleOppositePosOne = nodes[(i-2) % nodesCount].position
+									handleOppositePosOne = nodes[(i - 2) % nodesCount].position
 									handleOppositePosTwo = nodeOne.position
 								# opposite handle after current handle
 								elif thisHandle_nextHandle:
 									handle_handle = True
 									handleOppositePosOne = nodeTwo.position
-									handleOppositePosTwo = nodes[(i+1) % nodesCount].position
+									handleOppositePosTwo = nodes[(i + 1) % nodesCount].position
 								if handle_handle:
 									handleOppositePosLower = handleOppositePosOne
 									handleOppositePosUpper = handleOppositePosTwo
@@ -343,15 +341,13 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 												# both angles before correction are smaller of Italic Angle but after correction one of them will be larger of Italic Angle
 												elif angle <= ItalicAngle and angleOpposite <= ItalicAngle and (angleNew > ItalicAngle or angleNewOpposite > ItalicAngle):
 													handle_handle_haveGoodAngle = True
-								
-								
-								
+
+
 								# prevent to highlight handle if there is a smooth node and opposite line/handle has good angle
 								if not line_handle_haveGoodAngle and not handle_handle_haveGoodAngle:
 									scale = self.getScale()
-									
-									
-									
+
+
 									# draw highlight line between nodes
 									NSColor.colorWithString_(color).colorWithAlphaComponent_(opacity).set()
 									highlight = NSBezierPath.alloc().init()
@@ -359,9 +355,8 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 									highlight.lineToPoint_(highlightPosTwo)
 									highlight.setLineWidth_(highlightThickness / scale)
 									highlight.stroke()
-									
-									
-									
+
+
 									# preparations for drawing placeholder dots and distance numbers
 									xDifferenceShifted = xDifference
 									# shift dot position a little away from a node if it is visible to close to the node when scaling down
@@ -402,23 +397,22 @@ class HighlightImpreciseItalicAngle(ReporterPlugin):
 										textOffsetX = -textOffsetX
 										textAlignRight = 'bottomleft'
 										textAlignLeft = 'bottomright'
-									
-									
-									
+
+
 									# draw placeholder dots and distance numbers
 									if (nodeLowerIsOnCurve and nodeUpperIsOnCurve) or (not nodeLowerIsOnCurve and nodeUpperIsOnCurve):
 										# lower dot
 										rectLower = NSMakeRect(posLower.x - xDifferenceShifted - (diameter / 2), posLower.y - (diameter / 2), diameter, diameter)
 										NSBezierPath.bezierPathWithOvalInRect_(rectLower).fill()
 										# lower number
-										self.drawTextAtPoint(str(abs(xDifferenceRounded)), (posLower.x - xDifferenceShifted - textOffsetX, posLower.y - textOffsetY), fontColor = textColor, align = textAlignRight)
+										self.drawTextAtPoint(str(abs(xDifferenceRounded)), (posLower.x - xDifferenceShifted - textOffsetX, posLower.y - textOffsetY), fontColor=textColor, align=textAlignRight)
 									if (nodeLowerIsOnCurve and nodeUpperIsOnCurve) or (not nodeUpperIsOnCurve and nodeLowerIsOnCurve):
 										# upper dot
 										rectUpper = NSMakeRect(posUpper.x + xDifferenceShifted - (diameter / 2), posUpper.y - (diameter / 2), diameter, diameter)
 										NSBezierPath.bezierPathWithOvalInRect_(rectUpper).fill()
 										# upper number
-										self.drawTextAtPoint(str(abs(xDifferenceRounded)), (posUpper.x + xDifferenceShifted + textOffsetX, posUpper.y - textOffsetY), fontColor = textColor, align = textAlignLeft)
-	
+										self.drawTextAtPoint(str(abs(xDifferenceRounded)), (posUpper.x + xDifferenceShifted + textOffsetX, posUpper.y - textOffsetY), fontColor=textColor, align=textAlignLeft)
+
 	@objc.python_method
 	def __file__(self):
 		return __file__
