@@ -6,7 +6,8 @@
 from __future__ import division
 import objc
 from GlyphsApp import Glyphs, OFFCURVE
-from GlyphsApp.plugins import ReporterPlugin, NSColor, NSBezierPath, NSMakeRect
+from GlyphsApp.plugins import ReporterPlugin
+from Cocoa import NSColor, NSBezierPath, NSMakeRect
 from math import degrees, atan2, tan, pi
 import math
 
